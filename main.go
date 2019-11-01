@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/athoune/bleve-lexicon/lexicon"
 	"github.com/blevesearch/bleve"
 )
 
@@ -15,60 +16,41 @@ func main() {
 		return
 	}
 
-	data := struct {
+	// index some data
+	index.Index("1", struct {
 		Name string
 	}{
 		Name: "Il ne faut pas prendre les enfants du bon Dieu pour des canards sauvages",
-	}
+	})
+	index.Index("2", struct {
+		Name string
+	}{
+		Name: "la cité des enfants perdus",
+	})
+	index.Index("3", struct {
+		Name string
+	}{
+		Name: "Les enfants du paradis",
+	})
+	index.Index("4", struct {
+		Name string
+	}{
+		Name: "Rats des villes et rats des champs",
+	})
 
-	// index some data
-	index.Index("id", data)
-
-	fmt.Println(index.StatsMap())
-	fmt.Println(index.Fields())
-
-	dict, err := index.FieldDict("_all")
+	l, err := lexicon.Lexicon(index, "_all")
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
-
+	f, err := l.FieldDict("_all")
+	if err != nil {
+		panic(err)
+	}
 	for {
-		entry, err := dict.Next()
-		if err != nil || entry == nil {
+		e, err := f.Next()
+		if err != nil || e == nil {
 			break
 		}
-		fmt.Println(entry)
+		fmt.Println(e.Term, e.Count)
 	}
-
-	_, kv, err := index.Advanced()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	reader, err := kv.Reader()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	iter := reader.PrefixIterator([]byte(""))
-	for {
-		k, v, ok := iter.Current()
-		fmt.Println(string(k), "\n\t", string(v))
-		if !ok {
-			break
-		}
-		iter.Next()
-	}
-
-	// search for some text
-	query := bleve.NewMatchQuery("text")
-	search := bleve.NewSearchRequest(query)
-	searchResults, err := index.Search(search)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(searchResults)
 }
