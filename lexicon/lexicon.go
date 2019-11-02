@@ -1,8 +1,6 @@
 package lexicon
 
 import (
-	"math"
-
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzer/custom"
 	"github.com/blevesearch/bleve/analysis/char/asciifolding"
@@ -49,7 +47,8 @@ func init() {
 }
 
 type Lexicon struct {
-	Index bleve.Index
+	Index   bleve.Index
+	MaxDiff int
 }
 
 // Lexicon returns an index of tokens
@@ -78,12 +77,13 @@ func New(index bleve.Index, name string) (*Lexicon, error) {
 		return nil, err
 	}
 	return &Lexicon{
-		Index: lexicon,
+		Index:   lexicon,
+		MaxDiff: 2,
 	}, nil
 }
 
 // DoYouMean suggest an other spelling
-func (l *Lexicon) DoYouMean(word string, maxDiff int) ([]string, error) {
+func (l *Lexicon) DoYouMean(word string) ([]string, error) {
 	query := bleve.NewMatchQuery(word)
 	query.SetField("Value")
 	searchRequest := bleve.NewSearchRequest(query)
@@ -95,10 +95,14 @@ func (l *Lexicon) DoYouMean(word string, maxDiff int) ([]string, error) {
 	}
 	r := make([]string, 0)
 	for _, h := range searchResult.Hits {
-		if math.Abs(float64(len(h.ID)-len(word))) > float64(maxDiff) {
+		diff := len(h.ID) - len(word)
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff > l.MaxDiff {
 			continue
 		}
-		if search.LevenshteinDistance(h.ID, word) > maxDiff {
+		if search.LevenshteinDistance(h.ID, word) > l.MaxDiff {
 			continue
 		}
 		r = append(r, h.ID)

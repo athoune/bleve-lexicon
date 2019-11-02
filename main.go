@@ -52,7 +52,7 @@ func main() {
 		panic(err)
 	}
 
-	more, err := l.DoYouMean("anfant", 2)
+	more, err := l.DoYouMean("anfant")
 	if err != nil {
 		panic(err)
 	}
