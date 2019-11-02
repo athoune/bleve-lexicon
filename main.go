@@ -10,10 +10,9 @@ import (
 func main() {
 	// open a new index
 	mapping := bleve.NewIndexMapping()
-	index, err := bleve.New("example.bleve", mapping)
+	index, err := lexicon.OpenOrCreate("example.bleve", mapping)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	// index some data

@@ -47,7 +47,7 @@ func init() {
 
 // Lexicon returns an index of tokens
 func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
-	lexicon, err := bleve.New("lexicon.bleve", LexiconMapping)
+	lexicon, err := OpenOrCreate("lexicon.bleve", LexiconMapping)
 	if err != nil {
 		return nil, err
 	}
