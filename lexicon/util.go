@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/index/scorch"
 	"github.com/blevesearch/bleve/mapping"
 )
 
@@ -14,7 +15,7 @@ func OpenOrCreate(path string, mapping mapping.IndexMapping) (bleve.Index, error
 		return bleve.Open(path)
 	}
 	if os.IsNotExist(err) {
-		return bleve.New(path, mapping)
+		return bleve.NewUsing(path, mapping, scorch.Name, scorch.Name, nil)
 	}
 	return nil, err
 }
