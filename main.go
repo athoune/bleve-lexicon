@@ -37,24 +37,24 @@ func main() {
 	}{
 		Name: "Rats des villes et rats des champs",
 	})
+	batch.Index("5", struct {
+		Name string
+	}{
+		Name: "Les 4 fantastiques",
+	})
 
 	err = index.Batch(batch)
 	if err != nil {
 		panic(err)
 	}
-	l, err := lexicon.Lexicon(index, "_all")
+	l, err := lexicon.New(index, "_all")
 	if err != nil {
 		panic(err)
 	}
-	f, err := l.FieldDict("_all")
+
+	more, err := l.DoYouMean("anfant", 2)
 	if err != nil {
 		panic(err)
 	}
-	for {
-		e, err := f.Next()
-		if err != nil || e == nil {
-			break
-		}
-		fmt.Println(e.Term, e.Count)
-	}
+	fmt.Println(more)
 }

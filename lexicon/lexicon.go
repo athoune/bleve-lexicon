@@ -1,12 +1,15 @@
 package lexicon
 
 import (
+	"math"
+
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzer/custom"
 	"github.com/blevesearch/bleve/analysis/char/asciifolding"
 	"github.com/blevesearch/bleve/analysis/token/ngram"
 	"github.com/blevesearch/bleve/analysis/tokenizer/single"
 	"github.com/blevesearch/bleve/mapping"
+	"github.com/blevesearch/bleve/search"
 )
 
 type token struct {
@@ -45,8 +48,12 @@ func init() {
 
 }
 
+type Lexicon struct {
+	Index bleve.Index
+}
+
 // Lexicon returns an index of tokens
-func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
+func New(index bleve.Index, name string) (*Lexicon, error) {
 	lexicon, err := OpenOrCreate("lexicon.bleve", LexiconMapping)
 	if err != nil {
 		return nil, err
@@ -70,5 +77,31 @@ func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
 	if err != nil {
 		return nil, err
 	}
-	return lexicon, nil
+	return &Lexicon{
+		Index: lexicon,
+	}, nil
+}
+
+// DoYouMean suggest an other spelling
+func (l *Lexicon) DoYouMean(word string, maxDiff int) ([]string, error) {
+	query := bleve.NewMatchQuery(word)
+	query.SetField("Value")
+	searchRequest := bleve.NewSearchRequest(query)
+	searchRequest.Fields = []string{"*"}
+	searchRequest.Explain = true
+	searchResult, err := l.Index.Search(searchRequest)
+	if err != nil {
+		return nil, err
+	}
+	r := make([]string, 0)
+	for _, h := range searchResult.Hits {
+		if math.Abs(float64(len(h.ID)-len(word))) > float64(maxDiff) {
+			continue
+		}
+		if search.LevenshteinDistance(h.ID, word) > maxDiff {
+			continue
+		}
+		r = append(r, h.ID)
+	}
+	return r, nil
 }
