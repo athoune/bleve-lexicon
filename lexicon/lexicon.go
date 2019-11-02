@@ -51,6 +51,7 @@ func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
 	if err != nil {
 		return nil, err
 	}
+	batch := lexicon.NewBatch()
 	dict, err := index.FieldDict(name)
 	if err != nil {
 		return nil, err
@@ -60,7 +61,14 @@ func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
 		if err != nil || entry == nil {
 			break
 		}
-		lexicon.Index(entry.Term, token{Value: entry.Term})
+		err = batch.Index(entry.Term, token{Value: entry.Term})
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = lexicon.Batch(batch)
+	if err != nil {
+		return nil, err
 	}
 	return lexicon, nil
 }

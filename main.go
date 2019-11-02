@@ -15,28 +15,33 @@ func main() {
 		panic(err)
 	}
 
+	batch := index.NewBatch()
 	// index some data
-	index.Index("1", struct {
+	batch.Index("1", struct {
 		Name string
 	}{
 		Name: "Il ne faut pas prendre les enfants du bon Dieu pour des canards sauvages",
 	})
-	index.Index("2", struct {
+	batch.Index("2", struct {
 		Name string
 	}{
 		Name: "la cité des enfants perdus",
 	})
-	index.Index("3", struct {
+	batch.Index("3", struct {
 		Name string
 	}{
 		Name: "Les enfants du paradis",
 	})
-	index.Index("4", struct {
+	batch.Index("4", struct {
 		Name string
 	}{
 		Name: "Rats des villes et rats des champs",
 	})
 
+	err = index.Batch(batch)
+	if err != nil {
+		panic(err)
+	}
 	l, err := lexicon.Lexicon(index, "_all")
 	if err != nil {
 		panic(err)
