@@ -6,14 +6,16 @@ import (
 	"github.com/blevesearch/bleve/analysis/char/asciifolding"
 	"github.com/blevesearch/bleve/analysis/token/ngram"
 	"github.com/blevesearch/bleve/analysis/tokenizer/single"
+	"github.com/blevesearch/bleve/mapping"
 )
 
 type token struct {
 	Value string
 }
 
-// Lexicon returns an index of tokens
-func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
+var LexiconMapping mapping.IndexMapping
+
+func init() {
 	mapping := bleve.NewIndexMapping()
 	err := mapping.AddCustomTokenFilter(ngram.Name, map[string]interface{}{
 		"min":  3,
@@ -22,14 +24,12 @@ func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
 	})
 	if err != nil {
 		panic(err)
-		return nil, err
 	}
 	err = mapping.AddCustomCharFilter(asciifolding.Name, map[string]interface{}{
 		"type": asciifolding.Name,
 	})
 	if err != nil {
 		panic(err)
-		return nil, err
 	}
 	err = mapping.AddCustomAnalyzer("custom1", map[string]interface{}{
 		"type":          custom.Name,
@@ -39,12 +39,16 @@ func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
 	})
 	if err != nil {
 		panic(err)
-		return nil, err
 	}
 	mapping.DefaultAnalyzer = "custom1"
-	lexicon, err := bleve.New("lexicon.bleve", mapping)
+	LexiconMapping = mapping
+
+}
+
+// Lexicon returns an index of tokens
+func Lexicon(index bleve.Index, name string) (bleve.Index, error) {
+	lexicon, err := bleve.New("lexicon.bleve", LexiconMapping)
 	if err != nil {
-		panic(err)
 		return nil, err
 	}
 	dict, err := index.FieldDict(name)
